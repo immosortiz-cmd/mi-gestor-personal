@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mi Gestor Personal Cloud</title>
+    <meta name="theme-color" content="#2c3e50">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIk1pIEdlc3RvciBQZXJzb25hbCIsCiAgInNob3J0X25hbWUiOiAiR2VzdG9yIiwKICAic3RhcnRfdXJsIjogIi4iLAogICJkaXNwbGF5IjogInN0YW5kYWxvbmUiLAogICJiYWNrZ3JvdW5kX2NvbG9yIjogIiNmM2Y0ZjYiLAogICJ0aGVtZV9jb2xvciI6ICIjMmMzZTUwIgp9">
+    
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f3f4f6; margin: 0; padding: 15px; color: #1f2937; }
+        .header { text-align: center; margin-bottom: 20px; }
+        .header h1 { margin: 0; color: #2c3e50; font-size: 24px; }
+        .container { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); display: flex; flex-direction: column; }
+        h2 { margin-top: 0; color: #2c3e50; border-bottom: 2px solid #f3f4f6; padding-bottom: 8px; font-size: 18px; }
+        input, textarea, select, button { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #d1d5db; border-radius: 8px; font-size: 14px; outline: none; }
+        input:focus, textarea:focus, select:focus { border-color: #3b82f6; box-shadow: 0 0 0 3px rgba(59,130,246,0.15); }
+        button { background: #3b82f6; color: white; border: none; cursor: pointer; font-weight: bold; transition: background 0.2s; }
+        button:hover { background: #2563eb; }
+        .balance-box { background: #ecfdf5; border: 1px solid #a7f3d0; padding: 15px; border-radius: 8px; text-align: center; margin-bottom: 15px; }
+        .balance { font-size: 28px; font-weight: bold; color: #065f46; }
+        ul { list-style: none; padding: 0; max-height: 350px; overflow-y: auto; margin: 0; }
+        li { background: #f9fafb; padding: 12px; margin-bottom: 8px; border-radius: 8px; border-left: 5px solid #3b82f6; font-size: 14px; display: flex; flex-direction: column; justify-content: space-between; position: relative; }
+        .fin-li.ingreso { border-left-color: #10b981; }
+        .fin-li.egreso { border-left-color: #ef4444; }
+        .li-content { margin-bottom: 6px; }
+        .date-tag { font-size: 11px; color: #6b7280; display: block; margin-top: 3px; }
+        .cat-badge { display: inline-block; padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: bold; background: #e5e7eb; color: #374151; margin-bottom: 5px; width: max-content; }
+        .cat-Trabajo { background: #dbeafe; color: #1e40af; }
+        .cat-Ideas { background: #fef3c7; color: #92400e; }
+        .cat-Finanzas { background: #d1fae5; color: #065f46; }
+        .cat-Personal { background: #fce7f3; color: #9d174d; }
+        .btn-delete { background: #ef4444; padding: 6px 10px; width: auto; align-self: flex-end; font-size: 11px; margin: 4px 0 0 0; }
+        .btn-delete:hover { background: #dc2626; }
+        .filter-section { margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .loading { text-align: center; color: #6b7280; font-size: 12px; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+<div class="header">
+    <h1>💼 Mi Panel Personal (Cloud)</h1>
+</div>
+
+<div class="container">
+    <div class="card">
+        <h2>💰 Control de Finanzas</h2>
+        <div class="balance-box">
+            <div style="font-size:13px; color:#047857; font-weight:bold;">SALDO DISPONIBLE</div>
+            <div class="balance">$<span id="saldo">0.00</span></div>
+        </div>
+        
+        <input type="number" id="monto" placeholder="Monto ($)" step="0.01" min="0">
+        <input type="text" id="concepto" placeholder="Concepto (ej. Pago de luz, Nómina)">
+        <select id="tipoFinanza">
+            <option value="ingreso">Ingreso (+)</option>
+            <option value="egreso">Egreso (-)</option>
+        </select>
+        <button id="btnFinanza" onclick="agregarFinanza()">Registrar Transacción</button>
+
+        <h3 style="font-size:15px; margin-top:20px;">Historial de Movimientos</h3>
+        <ul id="listaFinanzas"></ul>
+    </div>
+
+    <div class="card">
+        <h2>📝 Bloc de Notas por Categorías</h2>
+        <input type="text" id="tituloNota" placeholder="Título de la nota">
+        <select id="categoriaNota">
+            <option value="Personal">🎀 Personal</option>
+            <option value="Trabajo">💼 Trabajo</option>
+            <option value="Ideas">💡 Ideas</option>
+            <option value="Finanzas">📈 Finanzas</option>
+        </select>
+        <textarea id="contenidoNota" rows="4" placeholder="Escribe el contenido aquí..."></textarea>
+        <button id="btnNota" onclick="guardarNota()">Guardar Nota</button>
+
+        <div class="filter-section">
+            <h3 style="font-size:15px; margin: 0;">Mis Notas</h3>
+            <select id="filtrarCategoria" onchange="cargarNotas()" style="width:auto; padding:5px; margin:0;">
+                <option value="Todas">Mostrar Todas</option>
+                <option value="Personal">Personal</option>
+                <option value="Trabajo">Trabajo</option>
+                <option value="Ideas">Ideas</option>
+                <option value="Finanzas">Finanzas</option>
+            </select>
+        </div>
+        <ul id="listaNotas"></ul>
+    </div>
+</div>
+
+<script>
+    // --- Configuración de Supabase ---
+    // REEMPLAZA ESTOS DOS VALORES CON LOS DE TU PANEL DE SUPABASE
+    const SUPABASE_URL = "https://kkcycpzhawtzvwjcvslr.supabase.co/rest/v1/";
+    const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrY3ljcHpoYXd0enZ3amN2c2xyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MzA5MTAsImV4cCI6MjA5NjQwNjkxMH0.Wjde_KRtZBrWZtw7AhlXnLrrnARoHr2pcV24s4ycem4";
+
+    const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+    // Variables locales para manejo de datos en la sesión
+    let finanzas = [];
+    let notas = [];
+
+    // --- FUNCIONES DE CARGA (READ) ---
+    async function cargarFinanzas() {
+        const { data, error } = await supabase
+            .from('finanzas')
+            .select('*')
+            .order('id', { ascending: false }); // Las más nuevas primero
+
+        if (error) return console.error('Error cargando finanzas:', error);
+        
+        finanzas = data || [];
+        renderFinanzas();
+    }
+
+    async function cargarNotas() {
+        const filtro = document.getElementById('filtrarCategoria').value;
+        let query = supabase.from('notas').select('*').order('id', { ascending: false });
+        
+        if (filtro !== 'Todas') {
+            query = query.eq('categoria', filtro);
+        }
+
+        const { data, error } = await query;
+        if (error) return console.error('Error cargando notas:', error);
+
+        notas = data || [];
+        renderNotas();
+    }
+
+    // --- FUNCIONES DE RENDERING (UI) ---
+    function renderFinanzas() {
+        const listaFinanzas = document.getElementById('listaFinanzas');
+        listaFinanzas.innerHTML = '';
+
+        let saldoTotal = finanzas.reduce((acc, f) => {
+            return acc + (f.tipo === 'ingreso' ? f.monto : -f.monto);
+        }, 0);
+        document.getElementById('saldo').innerText = saldoTotal.toFixed(2);
+
+        finanzas.forEach((f) => {
+            const li = document.createElement('li');
+            li.className = `fin-li ${f.tipo}`;
+            li.innerHTML = `
+                <div class="li-content">
+                    <strong>${f.concepto}</strong>: ${f.tipo === 'ingreso' ? '+' : '-'}$${f.monto.toFixed(2)} 
+                    <span class="date-tag">Fecha: ${f.fecha}</span>
+                </div>
+                <button class="btn-delete" onclick="eliminarFinanza(${f.id})">Eliminar</button>
+            `;
+            listaFinanzas.appendChild(li);
+        });
+    }
+
+    function renderNotas() {
+        const listaNotas = document.getElementById('listaNotas');
+        listaNotas.innerHTML = '';
+
+        notas.forEach((n) => {
+            const li = document.createElement('li');
+            li.innerHTML = `
+                <div class="li-content">
+                    <span class="cat-badge cat-${n.categoria}">${n.categoria.toUpperCase()}</span><br>
+                    <strong>${n.titulo}</strong><br>
+                    <span style="white-space: pre-wrap;">${n.contenido}</span>
+                    <span class="date-tag">Última actualización: ${n.fecha}</span>
+                </div>
+                <button class="btn-delete" onclick="eliminarNota(${n.id})">Eliminar</button>
+            `;
+            listaNotas.appendChild(li);
+        });
+    }
+
+    // --- FUNCIONES DE ESCRITURA Y ELIMINACIÓN (CRUD) ---
+    async function agregarFinanza() {
+        let montoRaw = parseFloat(document.getElementById('monto').value);
+        const concepto = document.getElementById('concepto').value.trim();
+        const tipo = document.getElementById('tipoFinanza').value;
+
+        if (isNaN(montoRaw) || montoRaw <= 0 || !concepto) {
+            return alert('Por favor, ingresa un monto válido mayor a 0 y un concepto.');
+        }
+
+        const monto = Math.abs(montoRaw);
+        const fecha = new Date().toLocaleString();
+
+        // Guardar en la nube
+        const { error } = await supabase
+            .from('finanzas')
+            .insert([{ monto, concepto, tipo, fecha }]);
+
+        if (error) return alert('Error al guardar en la nube: ' + error.message);
+
+        document.getElementById('monto').value = '';
+        document.getElementById('concepto').value = '';
+        
+        // Recargar datos desde la nube
+        cargarFinanzas();
+    }
+
+    async function eliminarFinanza(id) {
+        if(confirm('¿Seguro que deseas eliminar esta transacción?')) {
+            const { error } = await supabase.from('finanzas').delete().eq('id', id);
+            if (error) return alert('Error al eliminar: ' + error.message);
+            cargarFinanzas();
+        }
+    }
+
+    async function guardarNota() {
+        const titulo = document.getElementById('tituloNota').value.trim();
+        const contenido = document.getElementById('contenidoNota').value.trim();
+        const categoria = document.getElementById('categoriaNota').value;
+        const fecha = new Date().toLocaleString();
+
+        if (!titulo || !contenido) return alert('Por favor, completa los campos de la nota.');
+
+        // Guardar en la nube
+        const { error } = await supabase
+            .from('notas')
+            .insert([{ titulo, contenido, categoria, fecha }]);
+
+        if (error) return alert('Error al guardar la nota: ' + error.message);
+
+        document.getElementById('tituloNota').value = '';
+        document.getElementById('contenidoNota').value = '';
+        
+        cargarNotas();
+    }
+
+    async function eliminarNota(id) {
+        if(confirm('¿Seguro que deseas eliminar esta nota?')) {
+            const { error } = await supabase.from('notas').delete().eq('id', id);
+            if (error) return alert('Error al eliminar: ' + error.message);
+            cargarNotas();
+        }
+    }
+
+    // --- INICIALIZACIÓN ---
+    async function inicializarApp() {
+        await Promise.all([cargarFinanzas(), cargarNotas()]);
+    }
+
+    inicializarApp();
+</script>
+</body>
+</html>
