@@ -54,14 +54,14 @@
         const SUPABASE_URL = "https://kkcycpzhawtzvwjcvslr.supabase.co";
         const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrY3ljcHpoYXd0enZ3amN2c2xyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MzA5MTAsImV4cCI6MjA5NjQwNjkxMH0.Wjde_KRtZBrWZtw7AhlXnLrrnARoHr2pcV24s4ycem4";
 
-        const supabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-
+        const miSupabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        
         let finanzas = [];
         let notas = [];
 
         // --- FUNCIONES DE FINANZAS ---
         async function cargarFinanzas() {
-            const { data, error } = await supabase.from('finanzas').select('*').order('id', { ascending: false });
+            const { data, error } = await miSupabase.from('finanzas').select('*').order('id', { ascending: false });
             if (!error) {
                 finanzas = data;
                 renderFinanzas();
@@ -76,7 +76,7 @@
 
             if (!monto || !concepto) return alert('Por favor llena todos los campos de finanzas');
 
-            const { error } = await supabase.from('finanzas').insert([{ monto, concepto, tipo, fecha }]);
+            const { error } = await miSupabase.from('finanzas').insert([{ monto, concepto, tipo, fecha }]);
             if (!error) {
                 document.getElementById('monto').value = '';
                 document.getElementById('concepto').value = '';
@@ -106,7 +106,7 @@
 
         // --- FUNCIONES DE NOTAS ---
         async function cargarNotas() {
-            const { data, error } = await supabase.from('notas').select('*').order('id', { ascending: false });
+            const { data, error } = await miSupabase.from('notas').select('*').order('id', { ascending: false });
             if (!error) {
                 notas = data;
                 renderNotas();
@@ -121,7 +121,7 @@
 
             if (!titulo || !contenido) return alert('Por favor dale un título y contenido a la nota');
 
-            const { error } = await supabase.from('notas').insert([{ titulo, contenido, categoria, fecha }]);
+            const { error } = await miSupabase.from('notas').insert([{ titulo, contenido, categoria, fecha }]);
             if (!error) {
                 document.getElementById('nota-titulo').value = '';
                 document.getElementById('nota-contenido').value = '';
