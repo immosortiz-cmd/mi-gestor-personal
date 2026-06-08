@@ -51,11 +51,12 @@
     <script>
         // --- Configuración de Supabase ---
         // REEMPLAZA ESTOS DOS VALORES CON LOS DE TU PANEL DE SUPABASE
-        const SUPABASE_URL = "https://kkcycpzhawtzvwjcvslr.supabase.co";
-        const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtrY3ljcHpoYXd0enZ3amN2c2xyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODA4MzA5MTAsImV4cCI6MjA5NjQwNjkxMH0.Wjde_KRtZBrWZtw7AhlXnLrrnARoHr2pcV24s4ycem4";
+        const SUPABASE_URL = "https://tu-proyecto.supabase.co";
+        const SUPABASE_KEY = "tu-clave-anon-public-aquí";
 
+        // Inicializamos la conexión antes de declarar las funciones
         const miSupabase = Supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
+
         let finanzas = [];
         let notas = [];
 
@@ -101,57 +102,4 @@
 
             const balEl = document.getElementById('balance');
             balEl.textContent = `$${balance.toFixed(2)}`;
-            balEl.className = balance >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font-bold';
-        }
-
-        // --- FUNCIONES DE NOTAS ---
-        async function cargarNotas() {
-            const { data, error } = await miSupabase.from('notas').select('*').order('id', { ascending: false });
-            if (!error) {
-                notas = data;
-                renderNotas();
-            }
-        }
-
-        async function guardarNota() {
-            const titulo = document.getElementById('nota-titulo').value;
-            const contenido = document.getElementById('nota-contenido').value;
-            const categoria = document.getElementById('nota-categoria').value || 'General';
-            const fecha = new Date().toLocaleString();
-
-            if (!titulo || !contenido) return alert('Por favor dale un título y contenido a la nota');
-
-            const { error } = await miSupabase.from('notas').insert([{ titulo, contenido, categoria, fecha }]);
-            if (!error) {
-                document.getElementById('nota-titulo').value = '';
-                document.getElementById('nota-contenido').value = '';
-                document.getElementById('nota-categoria').value = '';
-                cargarNotas();
-            } else {
-                alert('Error al guardar la nota');
-            }
-        }
-
-        function renderNotas() {
-            const lista = document.getElementById('lista-notas');
-            lista.innerHTML = '';
-
-            notas.forEach(nota => {
-                const div = document.createElement('div');
-                div.className = 'bg-amber-50 p-4 rounded-lg shadow-sm border border-amber-200 space-y-1 relative';
-                div.innerHTML = `
-                    <span class="absolute top-2 right-2 bg-amber-200 text-amber-800 text-xs px-2 py-0.5 rounded-full font-semibold">${nota.categoria}</span>
-                    <h3 class="font-bold text-gray-800 pr-16">${nota.titulo}</h3>
-                    <p class="text-sm text-gray-600 whitespace-pre-wrap">${nota.contenido}</p>
-                    <p class="text-[10px] text-gray-400 mt-2">${nota.fecha}</p>
-                `;
-                lista.appendChild(div);
-            });
-        }
-
-        // Carga inicial al abrir la página
-        cargarFinanzas();
-        cargarNotas();
-    </script>
-</body>
-</html>
+            balEl.className = balance >= 0 ? 'text-green-600 font-bold' : 'text-red-600 font
